@@ -6,7 +6,6 @@
 #include <math.h>
 #include "utils.h"
 
-
 #define INPUT_DIM 4
 #define OUT_DIM 3
 #define H_DIM 10
@@ -30,6 +29,7 @@ double_array * softmax(double_array * ret , double_array * arr) {
     ret = arr_d2_equating(ret , arr);
   }
 
+  /** printf("out = np.exp(t)\n"); */
   for(int i = 0; i < arr->x; i++) {
     for(int j = 0; j < arr->y; j++) {
       ret->a[i][j] = (long double) exp((long double)arr->a[i][j]);
@@ -39,6 +39,7 @@ double_array * softmax(double_array * ret , double_array * arr) {
   long double * tmp_arr;
   tmp_arr = malloc(sizeof(long double) * arr->x);
   for(int i = 0; i < ret->x; i++) {
+    /** tmp_arr[i] = malloc(sizeof(long double) * arr->y); */
     long double sum = (long double) 0.0;
     for(int j = 0; j < ret->y; j++) {
       sum += (long double) ret->a[i][j];
@@ -57,7 +58,7 @@ double_array * softmax(double_array * ret , double_array * arr) {
 }
 
 long double sparse_cross_entropy(long double a) {
-  return (long double) log(a) * -1.0;
+  return (long double) log(a) * (long double) -1.0;
 }
 
 double_array * to_full(double_array * arr , int y) {
@@ -66,7 +67,9 @@ double_array * to_full(double_array * arr , int y) {
       arr->a[i][j] = (long double) 0.0;
     }
   }
+
   arr->a[0][y] = (long double) 1.0;
+
   return arr;
 }
 
@@ -78,7 +81,7 @@ double_array * relu_deriv(double_array * ret , double_array * arr) {
 
   for(int i = 0; i < arr->x; i++) {
     for(int j = 0; j < arr->y; j++) {
-      ret->a[i][j] = (arr->a[i][j] > 0) ? (long double) 1.0 : (long double) 0.0; 
+      ret->a[i][j] = (arr->a[i][j] > 0) ? 1.0 : 0.0; 
     }
   }
 
@@ -109,10 +112,10 @@ int main() {
   double_array * b2 = arr_d2_create_random(1 , OUT_DIM);
   
   // специально заполняю данные чтобы проверить работоспособность
-  W1 = _fill_arr(W1);
-  b1 = _fill_arr(b1);
-  W2 = _fill_arr(W2);
-  b2 = _fill_arr(b2);
+  /** W1 = _fill_arr(W1); */
+  /** b1 = _fill_arr(b1); */
+  /** W2 = _fill_arr(W2); */
+  /** b2 = _fill_arr(b2); */
   /** arr_d2_print("W1" , W1); */
   /** arr_d2_print("b1" , b1); */
   /** arr_d2_print("W2" , W2); */
@@ -123,12 +126,17 @@ int main() {
   double_array * x  = arr_d2_create(1 , INPUT_DIM);
   int y;
   // вычисляемые параметры
+  /** double_array * t1 = arr_d2_create(1 , H_DIM); */
+  /** double_array * h1 = arr_d2_create(1 , H_DIM); */
   double_array * t1 = NULL;
   double_array * h1 = NULL;
   // транспонированный
+  /** double_array * h1_T = arr_d2_create(H_DIM , 1); */
+  /** double_array * t2 = arr_d2_create(1 , OUT_DIM); */
   double_array * h1_T = NULL;
   double_array * t2 = NULL;
   // полученный результат
+  /** double_array * z  = arr_d2_create(1 , OUT_DIM); */
   double_array * z  = NULL;
   // ошибка
   double E;
@@ -151,10 +159,8 @@ int main() {
   double_array * A_dE_db2 = NULL;
 
   long double ALPHA = (long double) 0.0002;
-  // входные данные (потом возьму нормальные)
-  // выходные данные
-  /** y = 2; */
 
+  // выходные данные
   dataset_t ** dataset = read_dataset("./dataset.txt");
 
   /** for (int epoha = 0 ; epoha < 100 ; epoha++) { */
@@ -194,6 +200,7 @@ int main() {
 
       // результат
       z = softmax(z , t2);
+      /** arr_d2_print("z" , z); */
 
       // вычисление ошибки
       /** printf("E = sparse_cross_entropy(z , y) \n"); */
@@ -253,32 +260,67 @@ int main() {
       count++;
     }
   }
+
   /** arr_d2_print("W1" , W1); */
   /** arr_d2_print("b1" , b1); */
   /** arr_d2_print("W2" , W2); */
   /** arr_d2_print("b2" , b2); */
 
-  // провожу тестирование
+	// тестирование одного элеемнта
   x->a[0][0] = dataset[0]->d1;
   x->a[0][1] = dataset[0]->d2;
   x->a[0][2] = dataset[0]->d3;
   x->a[0][3] = dataset[0]->d4;
 
-  /** printf("t1 = x @ W1 + b1 \n"); */
+  // printf("t1 = x @ W1 + b1 \n"); 
   t1 = arr_d2_multiply_matrix(t1, x , W1 );
   t1 = arr_d2_increase(t1 , b1);
 
-  /** printf("h1 = relu(t1) \n"); */
+  printf("h1 = relu(t1) \n");
   h1 = relu(h1, t1);
 
-  /** printf("t2 = h1 @ W2 + b2 \n"); */
+  printf("t2 = h1 @ W2 + b2 \n");
   t2 = arr_d2_multiply_matrix(t2 , h1 , W2 );
   t2 = arr_d2_increase(t2 , b2);
 
   // результат
-  /** printf("z = softmax(t2) \n"); */
+  printf("z = softmax(t2) \n");
   z = softmax(z , t2);
   arr_d2_print("z" , z);
-  /** printf("правильный ответ %d\n" , dataset[0]->i); */
+  printf("правильный ответ %d\n" , dataset[0]->i);
 
+  // провожу тестирование всех элементов
+	/**
+  dataset_t ** dataset_p = dataset;
+  while(*dataset_p) {
+    dataset_t * d = *dataset_p;
+    x->a[0][0] = (long double) d->d1;
+    x->a[0][1] = (long double) d->d2;
+    x->a[0][2] = (long double) d->d3;
+    x->a[0][3] = (long double) d->d4;
+    y = d->i;
+
+    // printf("t1 = x @ W1 + b1 \n");
+    t1 = arr_d2_multiply_matrix(t1, x , W1 );
+    t1 = arr_d2_increase(t1 , b1);
+
+    // printf("h1 = relu(t1) \n");
+    h1 = relu(h1, t1);
+
+    // printf("t2 = h1 @ W2 + b2 \n");
+    t2 = arr_d2_multiply_matrix(t2 , h1 , W2 );
+    t2 = arr_d2_increase(t2 , b2);
+
+    // результат
+    // printf("z = softmax(t2) \n");
+    z = softmax(z , t2);
+    arr_d2_print("z" , z);
+    printf("правильный ответ %d\n" , y + 1);
+
+    dataset_p++;
+  }
+	*/
+
+  arr_d2_free();
+  dataset_free(dataset);
 }

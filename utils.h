@@ -48,5 +48,10 @@ double_array * arr_d2_equating(double_array * arr , double_array * A);
 // сложение массива
 double_array * arr_d2_increase(double_array * arr , double_array * A);
 
+// освобождение памяти для созданных массивов
+int arr_d2_free();
+
 // чтение датасета с данными для обучения из файла
 dataset_t ** read_dataset(char * filename);
+
+int dataset_free(dataset_t ** dataset);

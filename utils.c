@@ -6,6 +6,9 @@ long double randfrom(long double min, long double max) {
     return min + (rand() / div);
 }
 
+static double_array ** arrays = NULL;
+static int arrays_count = 0;
+
 // создание двумерного массива double
 double_array * arr_d2_create (int x , int y) {
   if (x < 1) exit(1);
@@ -26,6 +29,21 @@ double_array * arr_d2_create (int x , int y) {
       arr->a[i][j] = (long double) 0.0;
     }
   }
+
+  if (arrays == NULL) {
+    arrays = malloc(sizeof(double_array *));
+    if (arrays == NULL) {
+      printf("error malloc arrays\n");
+      exit(1);
+    }
+  } else {
+    arrays = realloc(arrays , sizeof(double_array *) * (arrays_count + 1));
+    if (arrays == NULL) {
+      printf("error malloc arrays\n");
+      exit(1);
+    }
+  }
+  arrays[arrays_count++] = arr;
 
   return arr;
 }
@@ -68,11 +86,24 @@ double_array * arr_d2_create_random (int x , int y) {
     arr->a[i] = (long double *) malloc (sizeof(long double) * y);
     for (int j = 0 ; j < y  ; j++) {
       /** printf("arr[%d][%d] = %d\n" , i , j , 10 * i + j); */
-      /** arr->a[i][j] = (long double) rand() / RAND_MAX ; */
       arr->a[i][j] = randfrom(-1.0 , 1.0);
-      /** {return min + rand() % (1000*(max-min)) / 1000.0f;} */
     }
   }
+
+  if (arrays == NULL) {
+    arrays = malloc(sizeof(double_array *));
+    if (arrays == NULL) {
+      printf("error malloc arrays\n");
+      exit(1);
+    }
+  } else {
+    arrays = realloc(arrays , sizeof(double_array *) * (arrays_count + 1));
+    if (arrays == NULL) {
+      printf("error malloc arrays\n");
+      exit(1);
+    }
+  }
+  arrays[arrays_count++] = arr;
 
   return arr;
 }
@@ -173,10 +204,6 @@ double_array * arr_d2_decrease(double_array * arr , double_array * A , double_ar
     /** printf("arr_d2_decrease: create array x = %d , y = %d\n" , A->x , A->y); */
     arr = arr_d2_create(A->x , A->y);
   }
-  if (arr == NULL) {
-    printf("error create array\n");
-    exit(0);
-  }
 
   /** double_array * arr = arr_d2_create(A->x , A->y); */
   if (A->x != B->x) {
@@ -204,11 +231,6 @@ double_array * arr_d2_transparent(double_array * ret , double_array * arr) {
   if (ret == NULL) {
     /** printf("arr_d2_transparent: create array x = %d , y = %d\n" , arr->y , arr->x); */
     ret = arr_d2_create(arr->y , arr->x);
-  }
-
-  if (ret == NULL) {
-    printf("error create array\n");
-    exit(0);
   }
 
   if (ret->x != arr->y) {
@@ -245,7 +267,6 @@ double_array * arr_d2_equating(double_array * arr , double_array * A) {
     exit(1);
   }
 
-  // TODO: сделать проверку на размер
   // может быть поулчится использовать копирование памяти
   for (int i = 0; i < arr->x; i++) {
     for (int j = 0; j < arr->y; j++) {
@@ -270,7 +291,7 @@ double_array * arr_d2_increase(double_array * arr , double_array * A) {
     printf("Error arr_d2_increase: arr->y != A->y\n");
     exit(1);
   }
-  // TODO: сделать проверку на размер
+
   // может быть поулчится использовать копирование памяти
   for (int i = 0; i < arr->x; i++) {
     for (int j = 0; j < arr->y; j++) {
@@ -279,6 +300,19 @@ double_array * arr_d2_increase(double_array * arr , double_array * A) {
   }
 
   return arr;
+}
+
+int arr_d2_free() {
+  for (int i = 0 ; i < arrays_count ; i++) {
+    /** printf("x = %d , y = %d\n" , arrays[i]->x , arrays[i]->y); */
+    for (int x = 0 ; x < arrays[i]->x ; x++) {
+      free(arrays[i]->a[x]);
+    }
+    free(arrays[i]->a);
+    free(arrays[i]);
+  }
+
+  return 0;
 }
 
 // чтение датасета с данными для обучения из файла
@@ -309,4 +343,9 @@ dataset_t ** read_dataset(char * filename) {
     free(line);
 
   return dataset;
+}
+
+int dataset_free(dataset_t ** dataset) {
+  free(dataset);
+  return 0;
 }
